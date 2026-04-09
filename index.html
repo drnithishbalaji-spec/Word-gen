@@ -1,0 +1,193 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyWordGen.net | Word Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .word-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+
+        /* Faster bar for smoother reset, but controlled by JS */
+        #progress-bar {
+            transition-property: width;
+            transition-timing-function: linear;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <!-- Header / Domain & DNS Info -->
+    <div class="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl p-6 mb-8 shadow-xl">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-400">MyWordGen.net</h1>
+                <p class="text-slate-400 text-sm mt-1">Status: <span class="text-green-500 font-bold">Online</span></p>
+            </div>
+            <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-right">
+                <span class="text-xs text-slate-500 block uppercase tracking-wider font-semibold">DNS Config</span>
+                <span class="mono text-indigo-300 font-bold">102.843.384.393</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Generator Display -->
+    <div class="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden">
+        <!-- Progress Bar (3 seconds) -->
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-900">
+            <div id="progress-bar" class="h-full bg-indigo-500 w-0"></div>
+        </div>
+        
+        <div class="mt-4">
+            <span class="text-slate-500 uppercase tracking-widest text-xs font-bold">Current Sequence</span>
+            <div id="current-word" class="text-5xl md:text-7xl font-black my-8 text-white tracking-tight min-h-[1.2em]">
+                Initializing...
+            </div>
+        </div>
+        
+        <div class="flex flex-col items-center gap-2">
+            <button id="toggle-btn" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold transition-all transform active:scale-95 flex items-center gap-3">
+                <div id="status-indicator" class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <span id="status-text">Generating Every 3s</span>
+            </button>
+            <p class="text-xs text-slate-500 mt-2">Interval: 3000ms</p>
+        </div>
+    </div>
+
+    <!-- History List -->
+    <div class="w-full max-w-2xl mt-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-slate-400 font-bold tracking-tight">DATA FEED</h3>
+            <span id="word-count" class="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full font-mono">0 ENTRIES</span>
+        </div>
+        <div id="history-container" class="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scroll">
+            <!-- Words injected here -->
+        </div>
+    </div>
+
+    <script>
+        const wordList = [
+            "Alpha", "Nexus", "Vortex", "Quantum", "Cipher", "Logic", "Pulse", "Grid",
+            "Shadow", "Vertex", "Static", "Zenith", "Neon", "Cyber", "Flow", "Link",
+            "Proxy", "Node", "Core", "Drift", "Aura", "Sync", "Frame", "Phase",
+            "Vault", "Spark", "Orbit", "Flux", "Data", "Ghost", "Echo", "Titan"
+        ];
+
+        let isActive = true;
+        let count = 0;
+        const intervalTime = 3000; // 3 seconds
+        
+        const currentWordEl = document.getElementById('current-word');
+        const historyContainer = document.getElementById('history-container');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const statusText = document.getElementById('status-text');
+        const statusIndicator = document.getElementById('status-indicator');
+        const progressBar = document.getElementById('progress-bar');
+        const wordCountEl = document.getElementById('word-count');
+
+        function generateWord() {
+            if (!isActive) return;
+
+            // Pick a word
+            const baseWord = wordList[Math.floor(Math.random() * wordList.length)];
+            const hexId = Math.random().toString(16).slice(2, 6).toUpperCase();
+            const fullWord = `${baseWord}-${hexId}`;
+
+            // Update UI
+            currentWordEl.innerText = fullWord;
+            
+            // Animation for progress bar
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '0%';
+            
+            // Trigger reflow to ensure the 'none' transition is applied
+            void progressBar.offsetWidth;
+
+            progressBar.style.transition = `width ${intervalTime}ms linear`;
+            progressBar.style.width = '100%';
+
+            // Update Statistics
+            count++;
+            wordCountEl.innerText = `${count} ENTRIES`;
+            
+            // Log entry
+            const logEntry = document.createElement('div');
+            logEntry.className = 'word-card bg-slate-800/40 border border-slate-700/50 p-4 rounded-xl flex justify-between items-center backdrop-blur-sm';
+            logEntry.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-indigo-500 font-bold text-xs">#${count.toString().padStart(3, '0')}</span>
+                    <span class="mono text-white font-medium">${fullWord}</span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-mono">${new Date().toLocaleTimeString()}</span>
+            `;
+            
+            historyContainer.prepend(logEntry);
+
+            // Cap history
+            if (historyContainer.children.length > 30) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            isActive = !isActive;
+            if (isActive) {
+                statusText.innerText = "Generating Every 3s";
+                statusIndicator.className = "w-3 h-3 bg-green-400 rounded-full animate-pulse";
+                toggleBtn.classList.replace('bg-slate-700', 'bg-indigo-600');
+                // Restart visual cycle
+                progressBar.style.transition = `width ${intervalTime}ms linear`;
+                progressBar.style.width = '100%';
+            } else {
+                statusText.innerText = "Generator Paused";
+                statusIndicator.className = "w-3 h-3 bg-red-500 rounded-full";
+                toggleBtn.classList.replace('bg-indigo-600', 'bg-slate-700');
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
+            }
+        });
+
+        // Loop management
+        setInterval(generateWord, intervalTime);
+        
+        // Initial Start
+        window.onload = () => {
+            generateWord();
+        };
+    </script>
+</body>
+</html>
+
+```
